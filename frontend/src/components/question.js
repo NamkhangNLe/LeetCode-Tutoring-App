@@ -1,45 +1,26 @@
-// frontend/src/components/Question.js
-import React, { useState, useEffect } from 'react';
+// src/components/Question.js
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const Question = ({ topic, userId }) => {
-  const [questions, setQuestions] = useState([]);
-  const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [loading, setLoading] = useState(true);
+function Question({ userId }) {
+  const [practiceProblems, setPracticeProblems] = useState(null);
 
   useEffect(() => {
-    const fetchQuestions = async () => {
-      const response = await axios.get(`/api/questions/${topic}`, { params: { userId } });
-      setQuestions(response.data);
-      setCurrentQuestion(response.data[0]);
-      setLoading(false);
-    };
-
-    fetchQuestions();
-  }, [topic, userId]);
-
-  const handleAnswer = async (success) => {
-    await axios.post('/api/progress', { userId, topic, success });
-    // Fetch next question or update UI accordingly
-  };
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
+    axios.get('/api/practice')
+      .then(response => {
+        setPracticeProblems(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching practice problems:', error);
+      });
+  }, []);
 
   return (
     <div>
-      <h2>Questions for {topic}</h2>
-      {currentQuestion && (
-        <div>
-          <p>{currentQuestion.title}</p>
-          <a href={currentQuestion.url} target="_blank" rel="noopener noreferrer">Solve on LeetCode</a>
-          <button onClick={() => handleAnswer(true)}>Solved</button>
-          <button onClick={() => handleAnswer(false)}>Struggled</button>
-        </div>
-      )}
+      <h2>Practice Problems</h2>
+      {practiceProblems ? <pre>{JSON.stringify(practiceProblems, null, 2)}</pre> : 'Loading...'}
     </div>
   );
-};
+}
 
 export default Question;
