@@ -1,17 +1,30 @@
-// backend/controllers/index.js
-const User = require('../models/user');
-const Question = require('../models/question');
+// frontend/src/components/Question.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-exports.getTopicQuestions = async (req, res) => {
-  const { topic } = req.params;
-  const userId = req.query.userId;
+const Question = ({ topic, userId }) => {
+  const [questions, setQuestions] = useState([]);
 
-  try {
-    const user = await User.findById(userId);
-    const difficulty = user.progress.get(topic) || 1;
-    const questions = await Question.find({ topic, difficulty });
-    res.json(questions);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      const response = await axios.get(`/api/questions/${topic}`, { params: { userId } });
+      setQuestions(response.data);
+    };
+
+    fetchQuestions();
+  }, [topic, userId]);
+
+  return (
+    <div>
+      <h2>Questions for {topic}</h2>
+      {questions.map(question => (
+        <div key={question.id}>
+          <p>{question.title}</p>
+          <a href={question.url} target="_blank" rel="noopener noreferrer">Solve on LeetCode</a>
+        </div>
+      ))}
+    </div>
+  );
 };
+
+export default Question;
