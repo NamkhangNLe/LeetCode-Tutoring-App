@@ -18,8 +18,9 @@ const Question = ({ topic, userId }) => {
     <div>
       <h2>Questions for {topic}</h2>
       {questions.map(question => (
-        <div key={question._id}>
-          <p>{question.content}</p>
+        <div key={question.id}>
+          <p>{question.title}</p>
+          <a href={question.url} target="_blank" rel="noopener noreferrer">Solve on LeetCode</a>
         </div>
       ))}
     </div>
