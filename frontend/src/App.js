@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Main from './components/Main';
@@ -12,11 +12,11 @@ function App() {
   return (
     <Router>
       <Header />
-      <Switch>
-        <Route path="/" exact component={Main} />
-        <Route path="/questions/:topic" render={(props) => <Question {...props} userId={userId} />} />
-        <Route path="/progress" render={() => <Progress userId={userId} />} />
-      </Switch>
+      <Routes>
+        <Route path="/" element={<Main />} />
+        <Route path="/questions/:topic" element={<Question userId={userId} />} />
+        <Route path="/progress" element={<Progress userId={userId} />} />
+      </Routes>
       <Footer />
     </Router>
   );

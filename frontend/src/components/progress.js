@@ -1,3 +1,4 @@
+// frontend/src/components/Progress.js
 import React from 'react';
 
 const Progress = ({ progress }) => {
