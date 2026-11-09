@@ -259,10 +259,50 @@ code { font-family: var(--mono); font-size: 0.88em; }
 .test-detail code { word-break: break-word; }
 .mark-solved-btn { margin-top: 16px; width: 100%; }
 
+/* ---- CodeMirror editor (replaces the plain textarea) ---- */
+.editor-panel .cm-editor { font-size: 13.5px; background: var(--code-bg); }
+.editor-panel .cm-editor.cm-focused { outline: none; }
+.editor-panel .cm-scroller { font-family: var(--mono); line-height: 1.7; }
+.editor-panel .cm-gutters { background: #232329; border-right: 1px solid #2e2e36; color: #6b6b74; }
+.editor-panel .cm-activeLineGutter { background: #2e2e36; color: #c9c9c2; }
+
+/* ---- Reference solution reveal ---- */
+.solution-reveal { margin-top: 24px; }
+.solution-card { margin-top: 12px; }
+.solution-card .code-block { margin: 0 0 10px; }
+.complexity { font-size: 14.5px; color: var(--ink-soft); }
+.pill-assisted { color: var(--medium); background: var(--medium-bg); }
+.hidden-summary { font-size: 14px; font-weight: 650; color: var(--ink-soft); padding: 10px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+
+/* ---- Prev / next problem navigation ---- */
+.problem-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; }
+.problem-nav .btn { max-width: 48%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- Dashboard problem search ---- */
+.problem-search { margin-bottom: 36px; }
+.problem-search h2 { margin-bottom: 12px; }
+.search-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.search-input {
+  flex: 1; min-width: 260px; padding: 11px 14px; font-size: 15px;
+  border: 1px solid var(--border-strong); border-radius: 12px;
+  background: var(--surface); color: var(--ink); outline: none;
+}
+.search-input:focus { border-color: var(--accent); }
+.difficulty-filter { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-pill {
+  padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--ink-soft); font-size: 13.5px; font-weight: 650;
+  cursor: pointer;
+}
+.filter-pill.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.search-results { margin-top: 14px; }
+
 @media (max-width: 860px) {
   .problem-layout { grid-template-columns: 1fr; }
   .hero h1 { font-size: 32px; }
   h1 { font-size: 28px; }
   .brand-sub { display: none; }
   .editor { min-height: 300px; }
+  .problem-nav { flex-direction: column; }
+  .problem-nav .btn { max-width: 100%; }
 }

@@ -32,7 +32,9 @@ export default function PatternView({ pattern, progress, onProgressChange, onOpe
             <div className="mastery-fill" style={{ width: `${m.pct}%` }} />
           </div>
           <span className="mastery-text">
-            {m.solved}/{m.total} solved · {masteryLabel(m.pct)}
+            {m.solved}/{m.total} solved
+            {m.assisted > 0 ? ` · ${m.unassisted} unassisted, ${m.assisted} with help` : ''} ·{' '}
+            {masteryLabel(m.pct)}
           </span>
         </div>
       </header>
@@ -82,6 +84,7 @@ export default function PatternView({ pattern, progress, onProgressChange, onOpe
         <div className="problem-list">
           {pattern.problems.map((prob) => {
             const solved = !!progress.solved[prob.key];
+            const assisted = !!progress.solved[prob.key]?.assisted;
             const hintsUsed = progress.solved[prob.key]?.hintsUsed || 0;
             return (
               <button
@@ -95,7 +98,10 @@ export default function PatternView({ pattern, progress, onProgressChange, onOpe
                 <span className="problem-num">LC {prob.number}</span>
                 <span className="problem-title">{prob.title}</span>
                 <span className={`pill ${DIFF_CLASS[prob.difficulty]}`}>{prob.difficulty}</span>
-                {solved && hintsUsed > 0 && (
+                {solved && assisted && (
+                  <span className="hints-note">solved with help</span>
+                )}
+                {solved && !assisted && hintsUsed > 0 && (
                   <span className="hints-note">
                     {hintsUsed} hint{hintsUsed === 1 ? '' : 's'} used
                   </span>

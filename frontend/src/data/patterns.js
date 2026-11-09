@@ -72,6 +72,22 @@ for (let fast = 0; fast < nums.length; fast++) {
           'If numbers[left] + numbers[right] is smaller than the target, which pointer can move without ever missing the answer?',
           'You only need O(1) extra space. One pass with two pointers is enough.',
         ],
+        hiddenTestCases: [
+          { args: [[1, 2, 3, 4, 4, 9, 56, 90], 8], expected: [4, 5] },
+          { args: [[-5, -3, 0, 1, 4, 7], -8], expected: [1, 2] },
+          { args: [[1, 2], 3], expected: [1, 2] },
+        ],
+        solution: `function twoSum(numbers, target) {
+  let left = 0, right = numbers.length - 1;
+  while (left < right) {
+    const sum = numbers[left] + numbers[right];
+    if (sum === target) return [left + 1, right + 1];
+    if (sum < target) left++;
+    else right--;
+  }
+  return [-1, -1];
+}`,
+        complexity: 'Time O(n), space O(1). One pass over the already-sorted array; only two pointers are stored.',
         approach:
           'Left at 0, right at the end. While left < right, compare the sum to the target and move the pointer that cannot be part of any solution. Return 1-based indices.',
         functionName: 'twoSum',
@@ -97,6 +113,24 @@ for (let fast = 0; fast < nums.length; fast++) {
           'You need a helper to decide whether a character is alphanumeric, and you need to skip the rest.',
           'Lowercase as you go so the comparison is uniform.',
         ],
+        hiddenTestCases: [
+          { args: [''], expected: true },
+          { args: ['0P'], expected: false },
+          { args: ['ab@a'], expected: true },
+        ],
+        solution: `function isPalindrome(s) {
+  const isAlnum = (c) => /[a-z0-9]/i.test(c);
+  let left = 0, right = s.length - 1;
+  while (left < right) {
+    while (left < right && !isAlnum(s[left])) left++;
+    while (left < right && !isAlnum(s[right])) right--;
+    if (s[left].toLowerCase() !== s[right].toLowerCase()) return false;
+    left++;
+    right--;
+  }
+  return true;
+}`,
+        complexity: 'Time O(n), space O(1). Two pointers converge from the ends; non-alphanumeric characters are skipped in place.',
         approach:
           'Two pointers from both ends. Skip non-alphanumeric characters, compare lowercase characters, move inward. Any mismatch returns false.',
         functionName: 'isPalindrome',
@@ -123,6 +157,22 @@ for (let fast = 0; fast < nums.length; fast++) {
           'Start wide: left at 0, right at the end. You already have the maximum possible width.',
           'Moving the taller line inward can never increase the area, because the height is capped by the shorter line and the width only shrinks. So always move the shorter line.',
         ],
+        hiddenTestCases: [
+          { args: [[1, 2, 1]], expected: 2 },
+          { args: [[2, 3, 4, 5, 18, 17, 6]], expected: 17 },
+          { args: [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]], expected: 25 },
+        ],
+        solution: `function maxArea(height) {
+  let left = 0, right = height.length - 1, best = 0;
+  while (left < right) {
+    const area = (right - left) * Math.min(height[left], height[right]);
+    best = Math.max(best, area);
+    if (height[left] < height[right]) left++;
+    else right--;
+  }
+  return best;
+}`,
+        complexity: 'Time O(n), space O(1). Start at maximum width and always move the shorter line inward; the shorter line is the bottleneck.',
         approach:
           'Track the max area while moving the shorter of the two lines inward. The shorter line is the bottleneck, so discarding it is always safe.',
         functionName: 'maxArea',
@@ -148,6 +198,32 @@ for (let fast = 0; fast < nums.length; fast++) {
           'With the array sorted, the two-sum part is a two-pointer scan. That turns O(n^3) into O(n^2).',
           'Duplicates are the trap: skip equal values for the fixed element and for both pointers after finding a triplet.',
         ],
+        hiddenTestCases: [
+          { args: [[-2, 0, 1, 1, 2]], expected: [[-2, 0, 2], [-2, 1, 1]] },
+          { args: [[1, 2, 3]], expected: [] },
+          { args: [[-1, 0, 1, 2, -1, -4, -2, -3, 3, 0, 4]], expected: [[-4, 0, 4], [-4, 1, 3], [-3, -1, 4], [-3, 0, 3], [-3, 1, 2], [-2, -1, 3], [-2, 0, 2], [-1, -1, 2], [-1, 0, 1]] },
+        ],
+        solution: `function threeSum(nums) {
+  nums.sort((a, b) => a - b);
+  const out = [];
+  for (let i = 0; i < nums.length - 2; i++) {
+    if (i > 0 && nums[i] === nums[i - 1]) continue;
+    let left = i + 1, right = nums.length - 1;
+    while (left < right) {
+      const sum = nums[i] + nums[left] + nums[right];
+      if (sum === 0) {
+        out.push([nums[i], nums[left], nums[right]]);
+        while (left < right && nums[left] === nums[left + 1]) left++;
+        while (left < right && nums[right] === nums[right - 1]) right--;
+        left++;
+        right--;
+      } else if (sum < 0) left++;
+      else right--;
+    }
+  }
+  return out;
+}`,
+        complexity: 'Time O(n^2) after an O(n log n) sort, space O(1) besides the output. Fix one element, two-pointer scan the rest, and skip duplicates at every level.',
         approach:
           'Sort the array. For each index i, two-pointer scan the suffix for a pair summing to -nums[i], skipping duplicates at every level.',
         functionName: 'threeSum',
@@ -239,6 +315,22 @@ for (let i = 0; i < nums.length; i++) {
           'You do not need to re-sum each window from scratch. What changes when the window slides by one?',
           'Add the incoming element, subtract the outgoing one, and track the best sum.',
         ],
+        hiddenTestCases: [
+          { args: [[-1], 1], expected: -1 },
+          { args: [[0, 0, 0, 0], 2], expected: 0 },
+          { args: [[7, 4, 5, 8, 8, 3, 9, 8, 7, 6], 3], expected: 8 },
+        ],
+        solution: `function findMaxAverage(nums, k) {
+  let sum = 0;
+  for (let i = 0; i < k; i++) sum += nums[i];
+  let best = sum;
+  for (let i = k; i < nums.length; i++) {
+    sum += nums[i] - nums[i - k];
+    best = Math.max(best, sum);
+  }
+  return best / k;
+}`,
+        complexity: 'Time O(n), space O(1). Fixed-size window: slide by adding the incoming element and subtracting the outgoing one.',
         approach:
           'Running sum over a fixed window of size k: slide by adding nums[i] and subtracting nums[i-k], tracking the maximum sum, then divide by k.',
         functionName: 'findMaxAverage',
@@ -264,6 +356,25 @@ for (let i = 0; i < nums.length; i++) {
           'A map from character to its last index lets you jump the left edge instead of creeping it forward one by one.',
           'Only jump left forward, never backward: left = max(left, lastIndex + 1).',
         ],
+        hiddenTestCases: [
+          { args: [''], expected: 0 },
+          { args: ['dvdf'], expected: 3 },
+          { args: ['anviaj'], expected: 5 },
+        ],
+        solution: `function lengthOfLongestSubstring(s) {
+  const lastSeen = new Map();
+  let left = 0, best = 0;
+  for (let right = 0; right < s.length; right++) {
+    const ch = s[right];
+    if (lastSeen.has(ch) && lastSeen.get(ch) >= left) {
+      left = lastSeen.get(ch) + 1;
+    }
+    lastSeen.set(ch, right);
+    best = Math.max(best, right - left + 1);
+  }
+  return best;
+}`,
+        complexity: 'Time O(n), space O(min(n, alphabet)). Each character is visited once; the left edge only jumps forward past repeats.',
         approach:
           'Expand right, remembering each character\'s last index. On a repeat inside the window, jump left past the previous occurrence. Track the max window size.',
         functionName: 'lengthOfLongestSubstring',
@@ -290,6 +401,24 @@ for (let i = 0; i < nums.length; i++) {
           'Count the characters of s1 once, then slide a fixed-size window over s2 and compare counts.',
           'Comparing two 26-length count arrays at every step is fine, or keep a "matches" counter and update it incrementally.',
         ],
+        hiddenTestCases: [
+          { args: ['ab', 'ab'], expected: true },
+          { args: ['abcd', 'abc'], expected: false },
+          { args: ['abc', 'bbbca'], expected: true },
+        ],
+        solution: `function checkInclusion(s1, s2) {
+  if (s1.length > s2.length) return false;
+  const counts = new Array(26).fill(0);
+  const a = 'a'.charCodeAt(0);
+  for (const ch of s1) counts[ch.charCodeAt(0) - a]++;
+  for (let i = 0; i < s2.length; i++) {
+    counts[s2.charCodeAt(i) - a]--;
+    if (i >= s1.length) counts[s2.charCodeAt(i - s1.length) - a]++;
+    if (i >= s1.length - 1 && counts.every((c) => c === 0)) return true;
+  }
+  return false;
+}`,
+        complexity: 'Time O(n), space O(1). Fixed-size window with 26 letter counts; the window matches when every count is back to zero.',
         approach:
           'Fixed-size window of length s1.length over s2 with frequency counts. The window is a match when its counts equal s1\'s counts.',
         functionName: 'checkInclusion',
@@ -315,6 +444,34 @@ for (let i = 0; i < nums.length; i++) {
           'Track how many distinct characters are satisfied, not the whole string. A "formed" counter keeps the check O(1).',
           'Record the best window every time you shrink, before the window stops being valid.',
         ],
+        hiddenTestCases: [
+          { args: ['aa', 'aa'], expected: 'aa' },
+          { args: ['bba', 'ab'], expected: 'ba' },
+          { args: ['abc', 'cba'], expected: 'abc' },
+        ],
+        solution: `function minWindow(s, t) {
+  const need = new Map();
+  for (const ch of t) need.set(ch, (need.get(ch) || 0) + 1);
+  let missing = t.length, left = 0, best = '';
+  for (let right = 0; right < s.length; right++) {
+    const ch = s[right];
+    if (need.has(ch)) {
+      if (need.get(ch) > 0) missing--;
+      need.set(ch, need.get(ch) - 1);
+    }
+    while (missing === 0) {
+      if (!best || right - left + 1 < best.length) best = s.slice(left, right + 1);
+      const out = s[left];
+      if (need.has(out)) {
+        need.set(out, need.get(out) + 1);
+        if (need.get(out) > 0) missing++;
+      }
+      left++;
+    }
+  }
+  return best;
+}`,
+        complexity: 'Time O(|s| + |t|), space O(1) for the alphabet-sized count map. Expand until all of t is covered, then shrink while it stays covered.',
         approach:
           'Count the characters t needs. Expand right, counting matches; once all are covered, shrink left as far as possible while staying valid, recording the smallest window seen.',
         functionName: 'minWindow',
@@ -401,6 +558,22 @@ return lo;`,
           'The classic loop condition is lo <= hi. What happens if you use lo < hi instead?',
           'Use Math.floor((lo + hi) / 2) for the midpoint.',
         ],
+        hiddenTestCases: [
+          { args: [[-1, 0, 3, 5, 9, 12], 12], expected: 5 },
+          { args: [[5], -5], expected: -1 },
+          { args: [[1, 2, 3, 4, 5, 6, 7, 8], 8], expected: 7 },
+        ],
+        solution: `function search(nums, target) {
+  let lo = 0, hi = nums.length - 1;
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (nums[mid] === target) return mid;
+    if (nums[mid] < target) lo = mid + 1;
+    else hi = mid - 1;
+  }
+  return -1;
+}`,
+        complexity: 'Time O(log n), space O(1). Each comparison discards half of the remaining search space.',
         approach:
           'Classic binary search: while lo <= hi, check mid. If nums[mid] is the target return it; otherwise discard the half that cannot contain it.',
         functionName: 'search',
@@ -426,6 +599,27 @@ return lo;`,
           'If the left half is sorted (nums[lo] <= nums[mid]), the target is in it exactly when it lies between nums[lo] and nums[mid].',
           'Otherwise the right half is sorted, and the same range check applies there.',
         ],
+        hiddenTestCases: [
+          { args: [[1, 3], 3], expected: 1 },
+          { args: [[3, 1], 1], expected: 1 },
+          { args: [[5, 1, 3], 3], expected: 2 },
+        ],
+        solution: `function search(nums, target) {
+  let lo = 0, hi = nums.length - 1;
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (nums[mid] === target) return mid;
+    if (nums[lo] <= nums[mid]) {
+      if (nums[lo] <= target && target < nums[mid]) hi = mid - 1;
+      else lo = mid + 1;
+    } else {
+      if (nums[mid] < target && target <= nums[hi]) lo = mid + 1;
+      else hi = mid - 1;
+    }
+  }
+  return -1;
+}`,
+        complexity: 'Time O(log n), space O(1). At every midpoint one half is sorted; check whether the target falls inside that half and discard the other.',
         approach:
           'At each step, identify the sorted half and check whether the target falls inside its range. Discard the other half. O(log n).',
         functionName: 'search',
@@ -452,6 +646,21 @@ return lo;`,
           'If nums[mid] is greater than nums[hi], the pivot (and the minimum) must be to the right of mid.',
           'Otherwise the minimum is at mid or to its left, so hi can move to mid.',
         ],
+        hiddenTestCases: [
+          { args: [[1, 2, 3, 4, 5]], expected: 1 },
+          { args: [[2, 1]], expected: 1 },
+          { args: [[5, 1, 2, 3, 4]], expected: 1 },
+        ],
+        solution: `function findMin(nums) {
+  let lo = 0, hi = nums.length - 1;
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (nums[mid] > nums[hi]) lo = mid + 1;
+    else hi = mid;
+  }
+  return nums[lo];
+}`,
+        complexity: 'Time O(log n), space O(1). Comparing mid with hi tells you which half holds the pivot; the loop ends on the minimum.',
         approach:
           'Binary search on the pivot: while lo < hi, if nums[mid] > nums[hi] move lo to mid + 1, else move hi to mid. Return nums[lo].',
         functionName: 'findMin',
@@ -477,6 +686,23 @@ return lo;`,
           'If Koko can finish at speed k, she can finish at any faster speed. Feasibility is monotonic, so binary search applies.',
           'For a candidate speed, the hours needed are the sum of ceil(pile / speed) over all piles.',
         ],
+        hiddenTestCases: [
+          { args: [[1, 1, 1, 1], 4], expected: 1 },
+          { args: [[1000000000], 2], expected: 500000000 },
+          { args: [[312884470], 968709470], expected: 1 },
+        ],
+        solution: `function minEatingSpeed(piles, h) {
+  let lo = 1, hi = Math.max(...piles);
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    let hours = 0;
+    for (const p of piles) hours += Math.ceil(p / mid);
+    if (hours <= h) hi = mid;
+    else lo = mid + 1;
+  }
+  return lo;
+}`,
+        complexity: 'Time O(n log m) where m is the largest pile, space O(1). Binary search on the answer: feasibility (finishing in h hours) is monotonic in speed.',
         approach:
           'Binary search k in [1, max(piles)]. For each candidate, compute total hours as the sum of ceil(pile / k); if it fits in h, try slower, otherwise faster.',
         functionName: 'minEatingSpeed',
@@ -564,6 +790,21 @@ for (const s of strs) {
           'A map from value to index lets you check for that complement in O(1).',
           'Store each number after checking, so you never reuse the same element.',
         ],
+        hiddenTestCases: [
+          { args: [[0, 4, 3, 0], 0], expected: [0, 3] },
+          { args: [[-3, 4, 3, 90], 0], expected: [0, 2] },
+          { args: [[1, 2, 3], 5], expected: [1, 2] },
+        ],
+        solution: `function twoSum(nums, target) {
+  const seen = new Map();
+  for (let i = 0; i < nums.length; i++) {
+    const need = target - nums[i];
+    if (seen.has(need)) return [seen.get(need), i];
+    seen.set(nums[i], i);
+  }
+  return [-1, -1];
+}`,
+        complexity: 'Time O(n), space O(n). One pass: for each value, ask the map whether its complement has been seen.',
         approach:
           'Single pass with a map from value to index. For each number, look up target - number; if present, return both indices.',
         functionName: 'twoSum',
@@ -589,6 +830,21 @@ for (const s of strs) {
           'Sort the letters of each word: anagrams produce the same sorted string. That sorted string is a perfect map key.',
           'Group by that key, then return the groups.',
         ],
+        hiddenTestCases: [
+          { args: [['a', 'b', 'c']], expected: [['a'], ['b'], ['c']] },
+          { args: [['ddddddddddg', 'dgggggggggg']], expected: [['ddddddddddg'], ['dgggggggggg']] },
+          { args: [['', 'b', '']], expected: [['', ''], ['b']] },
+        ],
+        solution: `function groupAnagrams(strs) {
+  const groups = new Map();
+  for (const s of strs) {
+    const key = [...s].sort().join('');
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(s);
+  }
+  return [...groups.values()];
+}`,
+        complexity: 'Time O(n k log k) for n strings of length k, space O(n k). Anagrams share the same sorted form, which is the map key.',
         approach:
           'Use the sorted form of each word as a map key and collect words into groups. Return the map values.',
         functionName: 'groupAnagrams',
@@ -615,6 +871,23 @@ for (const s of strs) {
           'The classic follow-up is bucket sort: an element with frequency f goes into bucket f.',
           'Collect from the highest bucket downward until you have k elements.',
         ],
+        hiddenTestCases: [
+          { args: [[4, 1, -1, 2, -1, 2, 3], 2], expected: [-1, 2] },
+          { args: [[3, 0, 1, 0], 1], expected: [0] },
+          { args: [[5, 5, 5, 5], 1], expected: [5] },
+        ],
+        solution: `function topKFrequent(nums, k) {
+  const freq = new Map();
+  for (const n of nums) freq.set(n, (freq.get(n) || 0) + 1);
+  const buckets = Array.from({ length: nums.length + 1 }, () => []);
+  for (const [n, f] of freq) buckets[f].push(n);
+  const out = [];
+  for (let f = buckets.length - 1; f >= 0 && out.length < k; f--) {
+    out.push(...buckets[f]);
+  }
+  return out.slice(0, k);
+}`,
+        complexity: 'Time O(n), space O(n). Count frequencies, bucket elements by frequency, then collect from the top bucket down.',
         approach:
           'Count frequencies with a map, bucket elements by frequency, then collect from the top bucket down until k elements are gathered.',
         functionName: 'topKFrequent',
@@ -641,6 +914,23 @@ for (const s of strs) {
           'A number starts a sequence only if the number before it is NOT in the set.',
           'From each start, walk forward counting consecutive numbers. Each number is visited at most twice overall.',
         ],
+        hiddenTestCases: [
+          { args: [[1, 2, 0, 1]], expected: 3 },
+          { args: [[9, 1, 4, 7, 3, -1, 0, 5, 8, -1, 6]], expected: 7 },
+          { args: [[-2, -1, 0, 1, 2]], expected: 5 },
+        ],
+        solution: `function longestConsecutive(nums) {
+  const set = new Set(nums);
+  let best = 0;
+  for (const n of set) {
+    if (set.has(n - 1)) continue;
+    let len = 1;
+    while (set.has(n + len)) len++;
+    best = Math.max(best, len);
+  }
+  return best;
+}`,
+        complexity: 'Time O(n), space O(n). Only start counting at a sequence start (no predecessor in the set), so each number is visited at most twice.',
         approach:
           'Put all numbers in a set. For each number that has no predecessor in the set, walk forward counting the run. Track the longest run.',
         functionName: 'longestConsecutive',
@@ -731,6 +1021,21 @@ for (let i = 0; i < nums.length; i++) {
           'When you see a closing bracket, it must match the most recent unmatched opening bracket.',
           'At the end, every promise must be fulfilled: the stack must be empty.',
         ],
+        hiddenTestCases: [
+          { args: [''], expected: true },
+          { args: ['([)]'], expected: false },
+          { args: ['{[]}'], expected: true },
+        ],
+        solution: `function isValid(s) {
+  const stack = [];
+  const pairs = { ')': '(', ']': '[', '}': '{' };
+  for (const ch of s) {
+    if (ch === '(' || ch === '[' || ch === '{') stack.push(ch);
+    else if (stack.pop() !== pairs[ch]) return false;
+  }
+  return stack.length === 0;
+}`,
+        complexity: 'Time O(n), space O(n). The stack holds unmatched openers; every closer must match the most recent one.',
         approach:
           'Push opening brackets. On a closing bracket, pop and check the type matches. The string is valid if the stack ends empty.',
         functionName: 'isValid',
@@ -756,6 +1061,25 @@ for (let i = 0; i < nums.length; i++) {
           'Keep a stack of indices waiting for a warmer day. When a hotter day arrives, it resolves every cooler day on top of the stack.',
           'The answer for a resolved day is the distance between the two indices.',
         ],
+        hiddenTestCases: [
+          { args: [[89, 62, 70, 58, 47, 47, 46, 76, 100, 70]], expected: [8, 1, 5, 4, 3, 2, 1, 1, 0, 0] },
+          { args: [[55, 54, 53, 52]], expected: [0, 0, 0, 0] },
+          { args: [[1, 2, 3]], expected: [1, 1, 0] },
+        ],
+        solution: `function dailyTemperatures(temperatures) {
+  const n = temperatures.length;
+  const answer = new Array(n).fill(0);
+  const stack = [];
+  for (let i = 0; i < n; i++) {
+    while (stack.length && temperatures[stack[stack.length - 1]] < temperatures[i]) {
+      const j = stack.pop();
+      answer[j] = i - j;
+    }
+    stack.push(i);
+  }
+  return answer;
+}`,
+        complexity: 'Time O(n), space O(n). Monotonic decreasing stack of indices waiting for a warmer day; each index is pushed and popped once.',
         approach:
           'Monotonic decreasing stack of indices. For each day, pop all cooler days and record the distance, then push the current day.',
         functionName: 'dailyTemperatures',
@@ -781,6 +1105,25 @@ for (let i = 0; i < nums.length; i++) {
           'When you see a number, push it. When you see an operator, pop two numbers, apply it, and push the result.',
           'Division truncates toward zero. In JS, use Math.trunc(a / b).',
         ],
+        hiddenTestCases: [
+          { args: [['18']], expected: 18 },
+          { args: [['3', '11', '+', '5', '-']], expected: 9 },
+          { args: [['4', '3', '-']], expected: 1 },
+        ],
+        solution: `function evalRPN(tokens) {
+  const stack = [];
+  for (const t of tokens) {
+    if (t === '+' || t === '-' || t === '*' || t === '/') {
+      const b = stack.pop(), a = stack.pop();
+      if (t === '+') stack.push(a + b);
+      else if (t === '-') stack.push(a - b);
+      else if (t === '*') stack.push(a * b);
+      else stack.push(Math.trunc(a / b));
+    } else stack.push(Number(t));
+  }
+  return stack[0];
+}`,
+        complexity: 'Time O(n), space O(n). Numbers wait on the stack until an operator arrives; division truncates toward zero.',
         approach:
           'Scan the tokens. Push numbers; on an operator, pop two operands, apply the operator, and push the result. The last value on the stack is the answer.',
         functionName: 'evalRPN',
@@ -806,6 +1149,25 @@ for (let i = 0; i < nums.length; i++) {
           'When you hit "[", push the current count and the string built so far, then start fresh inside the brackets.',
           'When you hit "]", pop the count and the previous string, and append the repeated inner string.',
         ],
+        hiddenTestCases: [
+          { args: ['abc3[cd]xyz'], expected: 'abccdcdcdxyz' },
+          { args: ['100[leetcode]'], expected: 'leetcode'.repeat(100) },
+          { args: ['3[b2[ca]]'], expected: 'bcacabcacabcaca' },
+        ],
+        solution: `function decodeString(s) {
+  const stack = [];
+  let num = 0, cur = '';
+  for (const ch of s) {
+    if (ch >= '0' && ch <= '9') num = num * 10 + Number(ch);
+    else if (ch === '[') { stack.push([num, cur]); num = 0; cur = ''; }
+    else if (ch === ']') {
+      const [n, prev] = stack.pop();
+      cur = prev + cur.repeat(n);
+    } else cur += ch;
+  }
+  return cur;
+}`,
+        complexity: 'Time O(n) in the size of the decoded output, space O(n) for the stack. On \'[\' push the count and the string built so far; on \']\' pop and repeat.',
         approach:
           'Two stacks (or one stack of pairs): on "[", push the current count and accumulated string; on "]", pop and repeat the inner string by the count.',
         functionName: 'decodeString',
@@ -891,6 +1253,22 @@ return prev1;`,
           'Define dp[i] as the number of ways to reach step i. Write the recurrence before writing code.',
           'You only need the previous two values, so two variables are enough.',
         ],
+        hiddenTestCases: [
+          { args: [1], expected: 1 },
+          { args: [10], expected: 89 },
+          { args: [30], expected: 1346269 },
+        ],
+        solution: `function climbStairs(n) {
+  if (n <= 2) return n;
+  let prev2 = 1, prev1 = 2;
+  for (let i = 3; i <= n; i++) {
+    const cur = prev1 + prev2;
+    prev2 = prev1;
+    prev1 = cur;
+  }
+  return prev1;
+}`,
+        complexity: 'Time O(n), space O(1). dp[i] = dp[i-1] + dp[i-2]; only the previous two values are ever needed.',
         approach:
           'dp[i] = dp[i-1] + dp[i-2] with dp[1] = 1, dp[2] = 2. Iterate up to n keeping only the last two values.',
         functionName: 'climbStairs',
@@ -916,6 +1294,21 @@ return prev1;`,
           'Define dp[i] as the best you can do considering the first i houses.',
           'Robbing house i means you cannot rob i-1, so you add nums[i] to dp[i-2]. Skipping it keeps dp[i-1].',
         ],
+        hiddenTestCases: [
+          { args: [[0]], expected: 0 },
+          { args: [[2, 1]], expected: 2 },
+          { args: [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]], expected: 30 },
+        ],
+        solution: `function rob(nums) {
+  let prev2 = 0, prev1 = 0;
+  for (const n of nums) {
+    const cur = Math.max(prev1, prev2 + n);
+    prev2 = prev1;
+    prev1 = cur;
+  }
+  return prev1;
+}`,
+        complexity: 'Time O(n), space O(1). At each house, rob it (prev2 + n) or skip it (prev1); keep the better of the two.',
         approach:
           'dp[i] = max(dp[i-1], dp[i-2] + nums[i]). Iterate with two variables for O(1) space.',
         functionName: 'rob',
@@ -942,6 +1335,22 @@ return prev1;`,
           'To make amount a, your last coin is some coin c, and the rest is amount a - c.',
           'If no coin fits, dp[a] stays at infinity. The answer is dp[amount], or -1 if it is still infinity.',
         ],
+        hiddenTestCases: [
+          { args: [[186, 419, 83, 408], 6249], expected: 20 },
+          { args: [[1], 1], expected: 1 },
+          { args: [[2, 5, 10], 3], expected: -1 },
+        ],
+        solution: `function coinChange(coins, amount) {
+  const dp = new Array(amount + 1).fill(Infinity);
+  dp[0] = 0;
+  for (let a = 1; a <= amount; a++) {
+    for (const c of coins) {
+      if (c <= a) dp[a] = Math.min(dp[a], dp[a - c] + 1);
+    }
+  }
+  return dp[amount] === Infinity ? -1 : dp[amount];
+}`,
+        complexity: 'Time O(amount x coins), space O(amount). dp[a] is the fewest coins for amount a; the last coin is some c, the rest is a - c.',
         approach:
           'dp[a] = 1 + min(dp[a - c]) over all coins c <= a, with dp[0] = 0. Fill the table from 0 to amount.',
         functionName: 'coinChange',
@@ -967,6 +1376,24 @@ return prev1;`,
           'For each i, look back at every j < i. If nums[j] < nums[i], you can extend the subsequence ending at j.',
           'The answer is the maximum dp[i] over all i, not necessarily dp[n-1].',
         ],
+        hiddenTestCases: [
+          { args: [[1, 3, 6, 7, 9, 4, 10, 5, 6]], expected: 6 },
+          { args: [[0]], expected: 1 },
+          { args: [[1, 2, 3, 4, 5]], expected: 5 },
+        ],
+        solution: `function lengthOfLIS(nums) {
+  if (nums.length === 0) return 0;
+  const dp = new Array(nums.length).fill(1);
+  let best = 1;
+  for (let i = 1; i < nums.length; i++) {
+    for (let j = 0; j < i; j++) {
+      if (nums[j] < nums[i]) dp[i] = Math.max(dp[i], dp[j] + 1);
+    }
+    best = Math.max(best, dp[i]);
+  }
+  return best;
+}`,
+        complexity: 'Time O(n^2), space O(n). dp[i] is the longest increasing subsequence ending at i; an O(n log n) patience-sorting solution exists as a follow-up.',
         approach:
           'dp[i] = 1 + max(dp[j]) for all j < i with nums[j] < nums[i]. O(n^2) time, O(n) space. (An O(n log n) patience-sorting solution exists as a follow-up.)',
         functionName: 'lengthOfLIS',

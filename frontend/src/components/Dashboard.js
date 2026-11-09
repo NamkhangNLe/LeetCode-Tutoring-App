@@ -1,6 +1,8 @@
-import React from 'react';
-import { PATTERNS } from '../data/patterns';
+import React, { useState } from 'react';
+import { PATTERNS, ALL_PROBLEMS } from '../data/patterns';
 import { patternMastery, overallStats, masteryLabel } from '../lib/progress';
+
+const DIFFICULTIES = ['All', 'Easy', 'Medium', 'Hard'];
 
 const DIFF_CLASS = {
   Easy: 'pill-easy',
@@ -51,9 +53,23 @@ function PatternCard({ pattern, progress, onOpen }) {
   );
 }
 
-export default function Dashboard({ progress, onOpenPattern }) {
+export default function Dashboard({ progress, onOpenPattern, onOpenProblem }) {
   const stats = overallStats(progress, PATTERNS);
   const patterns = PATTERNS.map((p, i) => ({ ...p, number: i + 1 }));
+  const [query, setQuery] = useState('');
+  const [difficulty, setDifficulty] = useState('All');
+  const q = query.trim().toLowerCase();
+  const matches = q || difficulty !== 'All'
+    ? ALL_PROBLEMS.filter((p) => {
+        if (difficulty !== 'All' && p.difficulty !== difficulty) return false;
+        if (!q) return true;
+        return (
+          p.title.toLowerCase().includes(q) ||
+          p.patternName.toLowerCase().includes(q) ||
+          String(p.number).includes(q)
+        );
+      })
+    : [];
   return (
     <div className="dashboard">
       <section className="hero">
@@ -82,6 +98,60 @@ export default function Dashboard({ progress, onOpenPattern }) {
             <span className="stat-label">hints used while solving</span>
           </div>
         </div>
+      </section>
+
+      <section className="problem-search">
+        <h2>Find a problem</h2>
+        <div className="search-row">
+          <input
+            className="search-input"
+            type="search"
+            placeholder="Search by title, pattern, or LeetCode number…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search problems"
+          />
+          <div className="difficulty-filter" role="group" aria-label="Filter by difficulty">
+            {DIFFICULTIES.map((d) => (
+              <button
+                key={d}
+                className={`filter-pill ${difficulty === d ? 'active' : ''}`}
+                onClick={() => setDifficulty(d)}
+                aria-pressed={difficulty === d}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+        </div>
+        {matches.length > 0 && (
+          <div className="problem-list search-results">
+            {matches.map((prob) => {
+              const solved = !!progress.solved[prob.key];
+              const assisted = !!progress.solved[prob.key]?.assisted;
+              return (
+                <button
+                  key={prob.key}
+                  className={`problem-row ${solved ? 'solved' : ''}`}
+                  onClick={() => onOpenProblem(prob.patternId, prob.key)}
+                >
+                  <span className={`solve-check ${solved ? 'on' : ''}`}>
+                    {solved ? '✓' : ''}
+                  </span>
+                  <span className="problem-num">LC {prob.number}</span>
+                  <span className="problem-title">{prob.title}</span>
+                  <span className="pill pill-pattern">{prob.patternName}</span>
+                  <span className={`pill ${DIFF_CLASS[prob.difficulty]}`}>{prob.difficulty}</span>
+                  {solved && assisted && <span className="hints-note">solved with help</span>}
+                  <span className="problem-arrow">→</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {(q || difficulty !== 'All') && matches.length === 0 && (
+          <p className="section-sub">No problems match that search.</p>
+        )}
       </section>
 
       <section className="pattern-grid">

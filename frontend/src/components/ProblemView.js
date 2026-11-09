@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import CodeMirror from '@uiw/react-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+import { oneDark } from '@codemirror/theme-one-dark';
 import { runSolution } from '../lib/runner';
 import { markSolved, unmarkSolved } from '../lib/progress';
 
@@ -29,22 +32,38 @@ const DIFF_CLASS = {
   Hard: 'pill-hard',
 };
 
-export default function ProblemView({ problem, progress, onProgressChange, onBack }) {
+export default function ProblemView({
+  problem,
+  progress,
+  onProgressChange,
+  onBack,
+  prevProblem,
+  nextProblem,
+  onNavigateProblem,
+}) {
   const solved = !!progress.solved[problem.key];
+  const assisted = !!progress.solved[problem.key]?.assisted;
   const [code, setCode] = useState(() => loadCode(problem.key, problem.starterCode));
   const [hintsRevealed, setHintsRevealed] = useState(0);
   const [runResult, setRunResult] = useState(null);
+  const [running, setRunning] = useState(false);
   const [showApproach, setShowApproach] = useState(false);
+  const [showSolution, setShowSolution] = useState(false);
   const [justSolved, setJustSolved] = useState(false);
-  const editorRef = useRef(null);
+  const solutionRevealedRef = useRef(false);
+  const runIdRef = useRef(0);
 
   // Reset local state when switching problems.
   useEffect(() => {
     setCode(loadCode(problem.key, problem.starterCode));
     setHintsRevealed(0);
     setRunResult(null);
+    setRunning(false);
     setShowApproach(false);
+    setShowSolution(false);
     setJustSolved(false);
+    solutionRevealedRef.current = false;
+    runIdRef.current += 1;
   }, [problem.key, problem.starterCode]);
 
   const handleCodeChange = (value) => {
@@ -52,25 +71,33 @@ export default function ProblemView({ problem, progress, onProgressChange, onBac
     saveCode(problem.key, value);
   };
 
-  const handleTab = (e) => {
-    if (e.key !== 'Tab') return;
-    e.preventDefault();
-    const el = editorRef.current;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const next = code.slice(0, start) + '  ' + code.slice(end);
-    handleCodeChange(next);
-    requestAnimationFrame(() => {
-      el.selectionStart = el.selectionEnd = start + 2;
-    });
-  };
-
-  const handleRun = () => {
-    const result = runSolution(code, problem.functionName, problem.testCases, problem.unordered);
+  const handleRun = useCallback(async () => {
+    const runId = ++runIdRef.current;
+    setRunning(true);
+    setJustSolved(false);
+    const result = await runSolution(
+      code,
+      problem.functionName,
+      problem.testCases,
+      problem.unordered,
+      problem.hiddenTestCases || []
+    );
+    if (runId !== runIdRef.current) return; // user moved to another problem
     setRunResult(result);
+    setRunning(false);
     if (result.allPassed && !solved) {
-      onProgressChange(markSolved(progress, problem.key, hintsRevealed));
+      onProgressChange(
+        markSolved(progress, problem.key, hintsRevealed, solutionRevealedRef.current)
+      );
       setJustSolved(true);
+    }
+  }, [code, problem, progress, solved, hintsRevealed, onProgressChange]);
+
+  // Cmd/Ctrl+Enter runs the tests, from anywhere in the editor panel.
+  const handleEditorKeyDown = (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleRun();
     }
   };
 
@@ -83,9 +110,21 @@ export default function ProblemView({ problem, progress, onProgressChange, onBac
     if (solved) {
       onProgressChange(unmarkSolved(progress, problem.key));
     } else {
-      onProgressChange(markSolved(progress, problem.key, hintsRevealed));
+      onProgressChange(
+        markSolved(progress, problem.key, hintsRevealed, solutionRevealedRef.current)
+      );
     }
   };
+
+  const handleRevealSolution = () => {
+    solutionRevealedRef.current = true;
+    setShowSolution((v) => !v);
+  };
+
+  const hiddenPassed = runResult
+    ? runResult.hiddenResults.filter((r) => r.passed).length
+    : 0;
+  const hiddenTotal = runResult ? runResult.hiddenResults.length : 0;
 
   return (
     <div className="problem-view">
@@ -101,7 +140,10 @@ export default function ProblemView({ problem, progress, onProgressChange, onBac
             <div className="problem-tags">
               <span className={`pill ${DIFF_CLASS[problem.difficulty]}`}>{problem.difficulty}</span>
               <span className="pill pill-pattern">{problem.pattern.name}</span>
-              {solved && <span className="pill pill-solved">✓ Solved</span>}
+              {solved && !assisted && <span className="pill pill-solved">✓ Solved</span>}
+              {solved && assisted && (
+                <span className="pill pill-assisted">✓ Solved with help</span>
+              )}
             </div>
           </header>
 
@@ -139,6 +181,29 @@ export default function ProblemView({ problem, progress, onProgressChange, onBac
             {showApproach && <p>{problem.approach}</p>}
           </section>
 
+          <section className="solution-reveal">
+            <button className="approach-toggle" onClick={handleRevealSolution}>
+              {showSolution
+                ? 'Hide the reference solution ▲'
+                : 'Reveal the reference solution ▼'}
+            </button>
+            <p className="section-sub">
+              Stuck for real? Read the solution, understand it, then re-solve it
+              yourself. Revealing it marks this problem as solved with help, not
+              as an unassisted solve.
+            </p>
+            {showSolution && (
+              <div className="solution-card">
+                <pre className="code-block">
+                  <code>{problem.solution}</code>
+                </pre>
+                <p className="complexity">
+                  <strong>Complexity:</strong> {problem.complexity}
+                </p>
+              </div>
+            )}
+          </section>
+
           <a
             className="leetcode-link"
             href={problem.url}
@@ -150,7 +215,7 @@ export default function ProblemView({ problem, progress, onProgressChange, onBac
         </div>
 
         <div className="problem-right">
-          <div className="editor-panel">
+          <div className="editor-panel" onKeyDown={handleEditorKeyDown}>
             <div className="editor-header">
               <span className="editor-title">solution.js</span>
               <span className="editor-fn">
@@ -160,21 +225,29 @@ export default function ProblemView({ problem, progress, onProgressChange, onBac
                 Reset
               </button>
             </div>
-            <textarea
-              ref={editorRef}
-              className="editor"
+            <CodeMirror
               value={code}
-              onChange={(e) => handleCodeChange(e.target.value)}
-              onKeyDown={handleTab}
-              spellCheck={false}
+              height="340px"
+              theme={oneDark}
+              extensions={[javascript({ jsx: false })]}
+              onChange={(value) => handleCodeChange(value)}
+              basicSetup={{
+                lineNumbers: true,
+                bracketMatching: true,
+                autocompletion: false,
+                foldGutter: false,
+                highlightActiveLineGutter: true,
+              }}
               aria-label="Code editor"
             />
             <div className="editor-footer">
-              <button className="btn btn-primary" onClick={handleRun}>
-                ▶ Run tests
+              <button className="btn btn-primary" onClick={handleRun} disabled={running}>
+                {running ? 'Running…' : '▶ Run tests'}
               </button>
               <span className="test-count">
-                {problem.testCases.length} test cases · runs in your browser
+                {problem.testCases.length} visible +{' '}
+                {(problem.hiddenTestCases || []).length} hidden test cases · runs
+                sandboxed in your browser · ⌘/Ctrl+Enter to run
               </span>
             </div>
           </div>
@@ -190,21 +263,41 @@ export default function ProblemView({ problem, progress, onProgressChange, onBac
                 <>
                   <div className={`results-summary ${runResult.allPassed ? 'pass' : 'fail'}`}>
                     {runResult.allPassed
-                      ? `All ${runResult.results.length} tests passed.`
+                      ? `All ${runResult.results.length + hiddenTotal} tests passed.`
                       : `${runResult.results.filter((r) => r.passed).length} of ${
                           runResult.results.length
-                        } tests passed.`}
+                        } visible tests passed.`}
                   </div>
+                  {hiddenTotal > 0 && (
+                    <div className="hidden-summary">
+                      Hidden tests: {hiddenPassed} of {hiddenTotal} passed.
+                    </div>
+                  )}
+                  {runResult.timedOut && (
+                    <div className="result-error">
+                      <strong>Your code timed out.</strong>
+                      <p>
+                        A test case ran longer than 2 seconds and was stopped, so
+                        the tab stays responsive. Check for an infinite loop or a
+                        loop that never makes progress.
+                      </p>
+                    </div>
+                  )}
                   {justSolved && runResult.allPassed && (
                     <div className="solved-banner">
-                      Solved! This problem is now marked complete for the{' '}
+                      Solved{assisted || solutionRevealedRef.current
+                        ? ' with the reference solution — marked as assisted'
+                        : ''}
+                      ! This problem is now marked complete for the{' '}
                       {problem.pattern.name} pattern.
                     </div>
                   )}
                   {runResult.results.map((r, i) => (
                     <div key={i} className={`test-case ${r.passed ? 'pass' : 'fail'}`}>
                       <div className="test-case-head">
-                        <span className="test-status">{r.passed ? '✓ Passed' : '✗ Failed'}</span>
+                        <span className="test-status">
+                          {r.timedOut ? '◷ Timed out' : r.passed ? '✓ Passed' : '✗ Failed'}
+                        </span>
                         <span className="test-name">Test case {i + 1}</span>
                       </div>
                       <div className="test-detail">
@@ -240,6 +333,29 @@ export default function ProblemView({ problem, progress, onProgressChange, onBac
           </button>
         </div>
       </div>
+
+      <nav className="problem-nav">
+        {prevProblem ? (
+          <button
+            className="btn btn-ghost"
+            onClick={() => onNavigateProblem(prevProblem.key)}
+          >
+            ← {prevProblem.title}
+          </button>
+        ) : (
+          <span />
+        )}
+        {nextProblem ? (
+          <button
+            className="btn btn-ghost"
+            onClick={() => onNavigateProblem(nextProblem.key)}
+          >
+            {nextProblem.title} →
+          </button>
+        ) : (
+          <span />
+        )}
+      </nav>
     </div>
   );
 }

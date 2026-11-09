@@ -47,8 +47,18 @@ npm run build    # production build in frontend/build
 npm test         # smoke test
 ```
 
-No account, no backend, no keys. Progress and editor code are stored in
-`localStorage` on the user's device.
+No account, no backend, no keys. Patternwise is local-first by design:
+progress and editor code are stored in `localStorage` on the user's device,
+and solutions run sandboxed in a Web Worker in the user's own browser.
+There is no server, no database, and no code ever leaves the device.
+
+## Deploy
+
+Every push to `build/tutor` builds the app and publishes it to GitHub Pages
+via `.github/workflows/deploy-pages.yml` (build from source, publish the
+complete `frontend/build` output including favicon and manifest, then
+smoke-check the live URL). The live site is
+https://namkhangnle.github.io/LeetCode-Tutoring-App/.
 
 ## Layout
 
@@ -57,21 +67,23 @@ frontend/
   src/
     data/patterns.js        # the curriculum: 6 patterns, lessons, 24 problems
     lib/progress.js         # localStorage progress store
-    lib/runner.js           # in-browser test runner for user solutions
+    lib/runner.js           # sandboxed Worker test runner for user solutions
+    lib/workerSource.js     # the program that runs inside the sandbox Worker
     components/
-      Dashboard.js          # home: stats + pattern cards
+      Dashboard.js          # home: stats + pattern cards + problem search
       PatternView.js        # lesson + worked example + problem list
       ProblemView.js        # problem, hints, editor, test results
-    App.js                  # shell + navigation
+    App.js                  # shell + hash routing
     index.css               # design system
-backend/                    # original Express stub, kept for reference;
-                            # the app is fully client-side and does not use it
 ```
 
 ## Adding a pattern or problem
 
 Add an entry to `PATTERNS` in `frontend/src/data/patterns.js`: a lesson
 (`idea`, `whenToUse`, `template`), a `workedExample`, and problems with
-`hints` (3), `starterCode`, `functionName`, and `testCases`. Verify new test
-cases against a reference solution before shipping; a wrong expected value
-teaches the wrong thing.
+`hints` (3), `starterCode`, `functionName`, `testCases`, `hiddenTestCases`
+(2-3 edge cases, shown only as pass/fail counts), a `solution` (reference
+code), and `complexity` (time/space analysis). Verify new test cases against
+a reference solution before shipping; a wrong expected value teaches the
+wrong thing. The catalog currently covers six patterns; trees, graphs,
+heaps, backtracking, intervals, and 2D DP are the next patterns to add.

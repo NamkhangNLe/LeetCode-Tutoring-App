@@ -30,12 +30,12 @@ export function saveProgress(progress) {
   }
 }
 
-export function markSolved(progress, problemKey, hintsUsed) {
+export function markSolved(progress, problemKey, hintsUsed, assisted = false) {
   return {
     ...progress,
     solved: {
       ...progress.solved,
-      [problemKey]: { hintsUsed, solvedAt: Date.now() },
+      [problemKey]: { hintsUsed, solvedAt: Date.now(), assisted: !!assisted },
     },
   };
 }
@@ -55,8 +55,15 @@ export function markLessonRead(progress, patternId) {
 
 export function patternMastery(progress, pattern) {
   const total = pattern.problems.length;
-  const solved = pattern.problems.filter((p) => progress.solved[p.key]).length;
-  return { solved, total, pct: total === 0 ? 0 : Math.round((solved / total) * 100) };
+  const solved = pattern.problems.filter((p) => progress.solved[p.key]);
+  const unassisted = solved.filter((p) => !progress.solved[p.key].assisted).length;
+  return {
+    solved: solved.length,
+    total,
+    unassisted,
+    assisted: solved.length - unassisted,
+    pct: total === 0 ? 0 : Math.round((solved.length / total) * 100),
+  };
 }
 
 export function overallStats(progress, patterns) {
